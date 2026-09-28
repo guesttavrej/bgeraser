@@ -3,40 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>bgeraser</title>
+<title>bgeraser — remove image backgrounds, offline</title>
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b8cff'/%3E%3Cpath d='M9 22 L19 9 l4 3 -10 13z' fill='%23fff'/%3E%3Crect x='8' y='23' width='16' height='2' rx='1' fill='%23fff' opacity='.7'/%3E%3C/svg%3E">
 <style>
-  :root { --bg:#0f1115; --card:#181b22; --text:#e8eaf0; --muted:#8b91a1; --accent:#5b8cff; --border:#2a2f3a; }
+  :root {
+    --bg:#0b0d12; --bg2:#10131a; --card:#151922; --card2:#1b2030; --line:#262c3a; --line2:#334;
+    --text:#eef0f5; --muted:#8d94a6; --dim:#5f6678;
+    --accent:#5b8cff; --accent2:#8b5cf6; --ok:#34d399; --err:#fb7185;
+    --shadow:0 20px 60px -20px rgba(0,0,0,.6);
+    --check-a:#2a3040; --check-b:#1c2130;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg:#f6f7fb; --bg2:#eef0f6; --card:#ffffff; --card2:#f2f4f9; --line:#e3e6ee; --line2:#cfd4e0;
+      --text:#11131a; --muted:#5b6172; --dim:#9aa0b0;
+      --shadow:0 20px 50px -24px rgba(20,30,60,.25);
+      --check-a:#e2e5ee; --check-b:#f7f8fb;
+    }
+  }
   * { box-sizing:border-box; }
-  body { margin:0; font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); }
-  main { max-width:960px; margin:0 auto; padding:32px 16px; }
-  h1 { margin:0 0 4px; font-size:28px; }
-  .sub { color:var(--muted); margin:0 0 24px; }
-  .drop { border:2px dashed var(--border); border-radius:14px; padding:40px 16px; text-align:center; cursor:pointer; transition:.15s; background:var(--card); }
-  .drop.over, .drop:hover { border-color:var(--accent); }
+  html, body { margin:0; }
+  body {
+    font:15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(900px 500px at 10% -10%, rgba(91,140,255,.18), transparent 60%),
+      radial-gradient(700px 400px at 100% 0%, rgba(139,92,246,.14), transparent 60%),
+      var(--bg);
+    color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  a { color:inherit; }
+  .wrap { max-width:1080px; margin:0 auto; padding:28px 20px 60px; }
+
+  /* header */
+  header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-.01em; }
+  .logo { width:30px; height:30px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:grid; place-items:center; box-shadow:0 6px 18px -6px var(--accent); }
+  .logo svg { width:18px; height:18px; }
+  .pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); border:1px solid var(--line); background:var(--card); padding:5px 10px; border-radius:999px; }
+  .pill i { width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 3px rgba(52,211,153,.18); }
+
+  /* hero */
+  .hero { text-align:center; margin:8px 0 26px; }
+  .hero h1 { font-size:clamp(28px,4.6vw,44px); line-height:1.1; margin:0 0 10px; letter-spacing:-.03em; font-weight:800; }
+  .hero h1 span { background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero p { margin:0 auto; color:var(--muted); max-width:560px; font-size:16px; }
+
+  /* drop zone */
+  .drop {
+    position:relative; display:block; border:1.5px dashed var(--line2); border-radius:18px; padding:38px 20px;
+    text-align:center; cursor:pointer; background:var(--card); transition:border-color .15s, background .15s, transform .15s;
+    box-shadow:var(--shadow);
+  }
+  .drop:hover, .drop.over { border-color:var(--accent); background:var(--card2); }
+  .drop.over { transform:scale(1.005); }
   .drop input { display:none; }
-  .opts { display:flex; flex-wrap:wrap; gap:12px 20px; margin:16px 0; align-items:center; color:var(--muted); }
-  .opts label { display:flex; gap:6px; align-items:center; }
-  select, input[type=text] { background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px 10px; }
-  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
-  @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
-  .pane { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
-  .pane h3 { margin:0; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
-  .checker { background: repeating-conic-gradient(#2a2f3a 0% 25%, #1f232c 0% 50%) 50% / 20px 20px; border-radius:8px; }
-  img { max-width:100%; max-height:420px; border-radius:8px; }
-  .btn { display:inline-block; background:var(--accent); color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:600; }
-  .status { color:var(--muted); min-height:24px; margin-top:8px; }
-  .err { color:#ff7b7b; }
+  .drop .ic { width:52px; height:52px; margin:0 auto 12px; border-radius:14px; background:linear-gradient(135deg,rgba(91,140,255,.18),rgba(139,92,246,.18)); display:grid; place-items:center; }
+  .drop .ic svg { width:26px; height:26px; stroke:var(--accent); }
+  .drop strong { font-size:17px; }
+  .drop .sub { color:var(--muted); margin-top:4px; font-size:14px; }
+  .drop kbd { font:12px ui-monospace, SFMono-Regular, Menlo, monospace; border:1px solid var(--line2); border-radius:6px; padding:1px 6px; color:var(--muted); }
+
+  /* options */
+  .opts { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; margin:18px 0 6px; }
+  .opts label { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:14px; }
+  select, input[type=text] {
+    font:inherit; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:8px 12px; outline:none;
+  }
+  select:focus, input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(91,140,255,.18); }
+  .swatches { display:flex; gap:6px; align-items:center; }
+  .sw { width:28px; height:28px; border-radius:8px; border:2px solid var(--line); cursor:pointer; padding:0; position:relative; background:var(--card); }
+  .sw.on { border-color:var(--accent); box-shadow:0 0 0 3px rgba(91,140,255,.18); }
+  .sw[data-bg=""] { background: repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 50% / 12px 12px; }
+  .sw input[type=color] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .toggle { position:relative; width:38px; height:22px; background:var(--line2); border-radius:999px; transition:.15s; flex:none; }
+  .toggle::after { content:""; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:.15s; }
+  input:checked + .toggle { background:var(--accent); }
+  input:checked + .toggle::after { transform:translateX(16px); }
+  .opts input[type=checkbox] { display:none; }
+
+  .status { min-height:24px; margin:10px 0 14px; color:var(--muted); font-size:14px; display:flex; align-items:center; gap:10px; }
+  .status.err { color:var(--err); }
+  .status.ok { color:var(--ok); }
+  .spin { width:16px; height:16px; border:2px solid var(--line2); border-top-color:var(--accent); border-radius:50%; animation:sp .8s linear infinite; }
+  @keyframes sp { to { transform:rotate(360deg); } }
+
+  /* result */
+  .result { display:none; }
+  .result.show { display:block; animation:up .35s ease; }
+  @keyframes up { from { opacity:0; transform:translateY(10px); } }
+  .cmp {
+    position:relative; border-radius:18px; overflow:hidden; border:1px solid var(--line); box-shadow:var(--shadow);
+    background: repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 50% / 22px 22px;
+    user-select:none; touch-action:none; width:fit-content; max-width:100%; margin:0 auto;
+  }
+  .cmp img { display:block; width:auto; max-width:100%; height:auto; max-height:70vh; }
+  .cmp .before { position:absolute; inset:0; overflow:hidden; background:var(--card); }
+  .cmp .before img { position:absolute; left:0; top:0; max-width:none; max-height:none; }
+  .cmp .handle { position:absolute; top:0; bottom:0; width:2px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.25); }
+  .cmp .knob { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:40px; height:40px; border-radius:50%; background:#fff; display:grid; place-items:center; box-shadow:0 6px 20px rgba(0,0,0,.35); color:#111; }
+  .cmp .tag { position:absolute; top:12px; font-size:11px; font-weight:700; letter-spacing:.08em; padding:4px 9px; border-radius:6px; background:rgba(0,0,0,.55); color:#fff; backdrop-filter:blur(6px); }
+  .cmp .tag.l { left:12px; } .cmp .tag.r { right:12px; }
+  .actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:14px; }
+  .btn { display:inline-flex; align-items:center; gap:8px; font:inherit; font-weight:600; border:0; cursor:pointer; padding:11px 18px; border-radius:12px; text-decoration:none; transition:.15s; }
+  .btn.p { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; box-shadow:0 10px 24px -10px var(--accent); }
+  .btn.p:hover { transform:translateY(-1px); filter:brightness(1.05); }
+  .btn.s { background:var(--card); color:var(--text); border:1px solid var(--line); }
+  .btn.s:hover { border-color:var(--line2); }
+  .btn svg { width:16px; height:16px; }
+  .meta { color:var(--dim); font-size:13px; margin-left:auto; }
+
+  /* features */
+  .feats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:34px; }
+  .feat { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .feat b { display:block; margin-bottom:4px; }
+  .feat span { color:var(--muted); font-size:14px; }
+  footer { margin-top:34px; color:var(--dim); font-size:13px; text-align:center; }
+  footer a { color:var(--muted); }
+  @media (max-width:720px) { .feats { grid-template-columns:1fr; } .pill span { display:none; } .wrap { padding:20px 16px 40px; } .drop { padding:28px 14px; } .meta { margin-left:0; width:100%; } }
 </style>
 </head>
 <body>
-<main>
-  <h1>bgeraser</h1>
-  <p class="sub">Remove image backgrounds — runs 100% on this computer, nothing is uploaded to the internet.</p>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18 15 5l4 3L9 21H5z"/><path d="M4 21h16"/></svg></div>
+      bgeraser
+    </div>
+    <span class="pill"><i></i> offline<span> · nothing leaves this computer</span></span>
+  </header>
+
+  <section class="hero">
+    <h1>Remove backgrounds.<br><span>Offline. Free. Unlimited.</span></h1>
+    <p>Drop a photo and get a clean transparent PNG in seconds — no uploads, no watermarks, no sign-up.</p>
+  </section>
 
   <label class="drop" id="drop">
     <input type="file" id="file" accept="image/*">
-    <strong>Drop an image here</strong> or click to choose<br>
-    <span style="color:var(--muted)">JPG, PNG, WEBP · up to 25 MB</span>
+    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div>
+    <strong>Drop an image here</strong> or click to choose
+    <div class="sub">JPG · PNG · WEBP · up to 25 MB — or press <kbd>Ctrl</kbd>+<kbd>V</kbd> to paste</div>
   </label>
 
   <div class="opts">
@@ -47,50 +153,118 @@
         {% endfor %}
       </select>
     </label>
-    <label>Background <input type="text" id="bg" placeholder="transparent (or: white, #00ff00)" size="26"></label>
-    <label><input type="checkbox" id="matting"> fine edges (slower)</label>
+    <label>Background
+      <span class="swatches" id="swatches">
+        <button type="button" class="sw on" data-bg="" title="Transparent"></button>
+        <button type="button" class="sw" data-bg="#ffffff" style="background:#fff" title="White"></button>
+        <button type="button" class="sw" data-bg="#000000" style="background:#000" title="Black"></button>
+        <button type="button" class="sw" data-bg="#00ff00" style="background:#00ff00" title="Green screen"></button>
+        <span class="sw" id="customSw" title="Custom color" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"><input type="color" id="customColor" value="#5b8cff"></span>
+      </span>
+    </label>
+    <label><input type="checkbox" id="matting"><span class="toggle"></span> Fine edges (hair, fur — slower)</label>
   </div>
 
-  <div class="status" id="status"></div>
+  <div class="status" id="status">Best on photos with one clear subject — a person, product, pet or logo.</div>
 
-  <div class="grid">
-    <div class="pane"><h3>Original</h3><img id="before" alt=""></div>
-    <div class="pane checker"><h3>Result</h3><img id="after" alt=""><a id="dl" class="btn" style="display:none" download>Download PNG</a></div>
-  </div>
-</main>
+  <section class="result" id="result">
+    <div class="cmp" id="cmp" style="--w:50%">
+      <img id="after" alt="Result">
+      <div class="before" id="beforeWrap" style="width:50%"><img id="before" alt="Original"></div>
+      <div class="handle" id="handle" style="left:50%"><div class="knob"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></div></div>
+      <span class="tag l">BEFORE</span><span class="tag r">AFTER</span>
+    </div>
+    <div class="actions">
+      <a class="btn p" id="dl" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>Download PNG</a>
+      <button class="btn s" id="again" type="button">Another image</button>
+      <span class="meta" id="meta"></span>
+    </div>
+  </section>
+
+  <section class="feats">
+    <div class="feat"><b>100% private</b><span>The AI model runs on this machine. Your photos never touch the internet.</span></div>
+    <div class="feat"><b>No limits</b><span>Process one image or a thousand. No credits, no watermark, no subscription.</span></div>
+    <div class="feat"><b>Batch from the terminal</b><span><code>bgeraser ./folder</code> clears every photo in a folder in one command.</span></div>
+  </section>
+
+  <footer>Open source · MIT · <a href="https://github.com/guesttavrej/bgeraser" target="_blank" rel="noopener">github.com/guesttavrej/bgeraser</a></footer>
+</div>
+
 <script>
-const drop = document.getElementById('drop'), file = document.getElementById('file');
-const before = document.getElementById('before'), after = document.getElementById('after');
-const dl = document.getElementById('dl'), status = document.getElementById('status');
+const $ = id => document.getElementById(id);
+const drop = $('drop'), file = $('file'), status = $('status'), result = $('result');
+const before = $('before'), after = $('after'), beforeWrap = $('beforeWrap'), handle = $('handle'), cmp = $('cmp');
+const dl = $('dl'), meta = $('meta');
+let bg = '', currentFile = null, busy = false;
 
-['dragenter','dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
-['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
-drop.addEventListener('drop', ev => { if (ev.dataTransfer.files[0]) run(ev.dataTransfer.files[0]); });
-file.addEventListener('change', () => { if (file.files[0]) run(file.files[0]); });
-window.addEventListener('paste', ev => { const f = [...ev.clipboardData.files][0]; if (f) run(f); });
+/* background swatches */
+$('swatches').addEventListener('click', e => {
+  const b = e.target.closest('.sw'); if (!b || b.id === 'customSw') return;
+  document.querySelectorAll('.sw').forEach(s => s.classList.remove('on')); b.classList.add('on');
+  bg = b.dataset.bg; if (currentFile && !busy) run(currentFile);
+});
+$('customColor').addEventListener('input', e => {
+  document.querySelectorAll('.sw').forEach(s => s.classList.remove('on')); $('customSw').classList.add('on');
+  $('customSw').style.background = e.target.value; bg = e.target.value;
+});
+$('customColor').addEventListener('change', () => { if (currentFile && !busy) run(currentFile); });
+$('model').addEventListener('change', () => { if (currentFile && !busy) run(currentFile); });
+$('matting').addEventListener('change', () => { if (currentFile && !busy) run(currentFile); });
+
+/* input methods */
+['dragenter','dragover'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || e.target === document.documentElement) drop.classList.remove('over'); }));
+document.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) run(f); });
+file.addEventListener('change', () => { if (file.files[0]) run(file.files[0]); file.value = ''; });
+window.addEventListener('paste', e => { const f = [...(e.clipboardData?.files || [])][0]; if (f) run(f); });
+$('again').addEventListener('click', () => { result.classList.remove('show'); currentFile = null; setStatus('Drop the next image.'); file.click(); });
+
+/* comparison slider */
+function setSplit(x) {
+  const r = cmp.getBoundingClientRect(); const p = Math.max(0, Math.min(1, (x - r.left) / r.width)) * 100;
+  beforeWrap.style.width = p + '%'; handle.style.left = p + '%';
+}
+let dragging = false;
+cmp.addEventListener('pointerdown', e => { dragging = true; cmp.setPointerCapture(e.pointerId); setSplit(e.clientX); });
+cmp.addEventListener('pointermove', e => { if (dragging) setSplit(e.clientX); });
+cmp.addEventListener('pointerup', () => dragging = false);
+cmp.addEventListener('pointercancel', () => dragging = false);
+function syncBefore() { before.style.width = after.clientWidth + 'px'; before.style.height = after.clientHeight + 'px'; }
+window.addEventListener('resize', syncBefore);
+
+function setStatus(msg, cls) { status.className = 'status' + (cls ? ' ' + cls : ''); status.innerHTML = msg; }
 
 async function run(f) {
-  before.src = URL.createObjectURL(f);
-  after.removeAttribute('src'); dl.style.display = 'none';
-  status.textContent = 'Processing… (first run downloads the model, please wait)';
-  status.classList.remove('err');
+  if (!f.type.startsWith('image/')) { setStatus('That is not an image file.', 'err'); return; }
+  currentFile = f; busy = true;
+  setStatus('<span class="spin"></span> Removing background…');
+  const slow = setTimeout(() => setStatus('<span class="spin"></span> Still working — large images and bigger models take longer.'), 8000);
   const fd = new FormData();
-  fd.append('image', f);
-  fd.append('model', document.getElementById('model').value);
-  fd.append('bg', document.getElementById('bg').value);
-  if (document.getElementById('matting').checked) fd.append('matting', 'on');
+  fd.append('image', f); fd.append('model', $('model').value); fd.append('bg', bg);
+  if ($('matting').checked) fd.append('matting', 'on');
   const t0 = performance.now();
   try {
     const r = await fetch('/remove', { method: 'POST', body: fd });
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || r.statusText); }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    after.src = url; dl.href = url; dl.download = f.name.replace(/\.[^.]+$/, '') + '-nobg.png';
-    dl.style.display = 'inline-block';
-    status.textContent = `Done in ${((performance.now() - t0) / 1000).toFixed(1)}s`;
+    const blob = await r.blob(); const url = URL.createObjectURL(blob);
+    before.src = URL.createObjectURL(f); after.src = url;
+    await Promise.all([
+      new Promise(res => { after.complete && after.naturalWidth ? res() : (after.onload = res); }),
+      new Promise(res => { before.complete && before.naturalWidth ? res() : (before.onload = res); }),
+    ]);
+    result.classList.add('show');
+    syncBefore(); beforeWrap.style.width = '50%'; handle.style.left = '50%';
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    dl.href = url; dl.download = f.name.replace(/\.[^.]+$/, '') + '-nobg.png';
+    const s = ((performance.now() - t0) / 1000).toFixed(1);
+    meta.textContent = `${after.naturalWidth}×${after.naturalHeight} · ${(blob.size/1024).toFixed(0)} KB · ${s}s`;
+    setStatus(`Done in ${s}s — drag the slider to compare.`, 'ok');
   } catch (e) {
-    status.textContent = 'Error: ' + e.message; status.classList.add('err');
-  }
+    const m = e.message === 'Failed to fetch'
+      ? 'Could not reach the server. Is the “bgeraser serve” window still open? Restart it and reload this page.'
+      : e.message;
+    setStatus('Error: ' + m, 'err');
+  } finally { clearTimeout(slow); busy = false; }
 }
 </script>
 </body>

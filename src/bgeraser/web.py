@@ -34,6 +34,10 @@ def create_app(model: str = DEFAULT_MODEL):
             png = remove_background_bytes(f.read(), model=chosen, bg_color=bg, alpha_matting=matting)
         except ValueError as e:
             return {"error": str(e)}, 400
+        except Exception as e:  # model download failure, bad image, etc.
+            msg = f"{type(e).__name__}: {e}"
+            print(f"[bgeraser] error: {msg}", flush=True)
+            return {"error": msg}, 500
         stem = Path(f.filename or "image").stem
         return Response(
             png,
@@ -49,6 +53,17 @@ def create_app(model: str = DEFAULT_MODEL):
 
 
 def serve(host: str = "127.0.0.1", port: int = 5000, model: str = DEFAULT_MODEL) -> None:
+    from .core import _get_session
+
+    print(f"loading model '{model}' (downloads on first run, please wait)...", flush=True)
+    try:
+        _get_session(model)
+    except Exception as e:
+        print(f"could not load model: {type(e).__name__}: {e}\n"
+              f"check your internet connection and run again.", flush=True)
+        raise SystemExit(1)
+    print("model ready", flush=True)
+
     app = create_app(model)
-    print(f"bgeraser web UI -> http://{host}:{port}   (model: {model}, Ctrl+C to stop)")
-    app.run(host=host, port=port, debug=False)
+    print(f"bgeraser web UI -> http://{host}:{port}   (model: {model}, Ctrl+C to stop)", flush=True)
+    app.run(host=host, port=port, debug=False, threaded=True)
