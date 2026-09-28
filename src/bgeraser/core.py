@@ -12,16 +12,15 @@ PathLike = Union[str, Path]
 
 #: Models available through rembg, smallest/fastest first.
 MODELS = {
-    "u2netp": "Fast, small (4 MB). Good default for quick jobs.",
-    "u2net": "General purpose, higher quality (170 MB).",
+    "isnet-general-use": "Best quality — clean edges on people, products, cars (170 MB).",
+    "u2net": "General purpose, good quality (170 MB).",
+    "u2netp": "Fastest, small (4 MB). Rougher edges.",
     "u2net_human_seg": "Tuned for people / portraits.",
-    "u2net_cloth_seg": "Segments clothing (upper, lower, full body).",
-    "isnet-general-use": "Newer general model, often best edges.",
     "isnet-anime": "For anime / illustration characters.",
+    "u2net_cloth_seg": "Segments clothing (upper, lower, full body).",
     "silueta": "u2net quality at ~43 MB.",
-    "sam": "Segment Anything (needs prompts, advanced).",
 }
-DEFAULT_MODEL = "u2netp"
+DEFAULT_MODEL = "isnet-general-use"
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".bmp", ".tif", ".tiff"}
 
@@ -57,6 +56,7 @@ def remove_background_image(
     bg_color: Optional[str] = None,
     alpha_matting: bool = False,
     post_process: bool = False,
+    solid: bool = True,
 ) -> Image.Image:
     """Remove the background from a PIL image and return an RGBA (or RGB) image.
 
@@ -67,19 +67,26 @@ def remove_background_image(
             If given, the result is flattened onto that color.
         alpha_matting: Refine edges (hair, fur). Slower.
         post_process: Apply rembg's mask post-processing (smoother mask).
+        solid: Clean up the mask so the subject is never half-transparent,
+            stray fragments are dropped and holes are filled (default on).
     """
     from rembg import remove  # lazy
 
     session = _get_session(model)
-    result = remove(
-        image,
-        session=session,
-        alpha_matting=alpha_matting,
-        post_process_mask=post_process,
-    )
-    if not isinstance(result, Image.Image):  # very old rembg returned bytes
-        result = Image.open(io.BytesIO(result))
-    result = result.convert("RGBA")
+    image = image.convert("RGBA")
+
+    if solid and not alpha_matting:
+        mask = remove(image, session=session, only_mask=True, post_process_mask=post_process)
+        if not isinstance(mask, Image.Image):
+            mask = Image.open(io.BytesIO(mask))
+        alpha = _clean_mask(mask.convert("L"))
+        result = image.copy()
+        result.putalpha(alpha)
+    else:
+        result = remove(image, session=session, alpha_matting=alpha_matting, post_process_mask=post_process)
+        if not isinstance(result, Image.Image):  # very old rembg returned bytes
+            result = Image.open(io.BytesIO(result))
+        result = result.convert("RGBA")
 
     rgb = _parse_color(bg_color)
     if rgb is not None:
@@ -87,6 +94,41 @@ def remove_background_image(
         background.alpha_composite(result)
         result = background.convert("RGB")
     return result
+
+
+def _clean_mask(mask: Image.Image) -> Image.Image:
+    """Turn a raw soft mask into a clean alpha channel.
+
+    - the subject becomes fully opaque (no see-through arms or legs)
+    - small disconnected fragments are removed
+    - holes inside the subject are filled
+    - the outline keeps a soft, slightly feathered edge with the model's
+      fine detail (hair, fur) preserved in the edge zone
+    """
+    import cv2
+    import numpy as np
+
+    m = np.asarray(mask, dtype=np.float32) / 255.0
+    solid = (m > 0.5).astype(np.uint8)
+    solid = cv2.morphologyEx(solid, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
+
+    n, labels, stats, _ = cv2.connectedComponentsWithStats(solid)
+    if n > 2:
+        areas = stats[1:, cv2.CC_STAT_AREA]
+        keep = [i + 1 for i, a in enumerate(areas) if a >= 0.02 * areas.max()]
+        solid = np.isin(labels, keep).astype(np.uint8)
+
+    # fill enclosed holes
+    flood = solid.copy()
+    h, w = solid.shape
+    cv2.floodFill(flood, np.zeros((h + 2, w + 2), np.uint8), (0, 0), 1)
+    solid[flood == 0] = 1
+
+    soft = cv2.GaussianBlur(solid.astype(np.float32), (0, 0), 1.2)
+    alpha = np.clip(np.maximum(soft, np.minimum(m, soft + 0.15)), 0.0, 1.0)
+    alpha = np.where(soft > 0.85, 1.0, alpha)
+    alpha = np.where(soft < 0.02, 0.0, alpha)
+    return Image.fromarray((alpha * 255).astype(np.uint8), "L")
 
 
 def remove_background(

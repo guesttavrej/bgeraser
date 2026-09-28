@@ -1,0 +1,2 @@
+[console_scripts]
+bgeraser = bgeraser.cli:main

@@ -3,77 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>bgeraser — remove image backgrounds, offline</title>
-<meta name="color-scheme" content="dark light">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%235b8cff'/%3E%3Cpath d='M9 22 L19 9 l4 3 -10 13z' fill='%23fff'/%3E%3Crect x='8' y='23' width='16' height='2' rx='1' fill='%23fff' opacity='.7'/%3E%3C/svg%3E">
+<title>bgeraser — Remove image background, free & offline</title>
+<meta name="description" content="Remove the background from any image automatically. Runs on your own computer: no uploads, no watermark, no limits.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f6bff'/%3E%3Cpath d='M9 22 L19 9 l4 3 -10 13z' fill='%23fff'/%3E%3Crect x='8' y='23' width='16' height='2' rx='1' fill='%23fff' opacity='.7'/%3E%3C/svg%3E">
 <style>
   :root {
-    --bg:#0b0d12; --bg2:#10131a; --card:#151922; --card2:#1b2030; --line:#262c3a; --line2:#334;
-    --text:#eef0f5; --muted:#8d94a6; --dim:#5f6678;
-    --accent:#5b8cff; --accent2:#8b5cf6; --ok:#34d399; --err:#fb7185;
-    --shadow:0 20px 60px -20px rgba(0,0,0,.6);
-    --check-a:#2a3040; --check-b:#1c2130;
-  }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg:#f6f7fb; --bg2:#eef0f6; --card:#ffffff; --card2:#f2f4f9; --line:#e3e6ee; --line2:#cfd4e0;
-      --text:#11131a; --muted:#5b6172; --dim:#9aa0b0;
-      --shadow:0 20px 50px -24px rgba(20,30,60,.25);
-      --check-a:#e2e5ee; --check-b:#f7f8fb;
-    }
+    --bg:#ffffff; --bg2:#f5f7fb; --card:#ffffff; --line:#e6e9f0; --line2:#cfd5e1;
+    --text:#1a1d26; --muted:#5f6675; --dim:#98a0b0;
+    --accent:#2f6bff; --accent-h:#1f57e6; --accent-soft:#e9f0ff; --ok:#15a36b; --err:#e0455b;
+    --shadow:0 24px 60px -24px rgba(24,39,75,.22), 0 2px 8px rgba(24,39,75,.06);
+    --check-a:#e6e9f0; --check-b:#f8f9fc; --radius:22px;
   }
   * { box-sizing:border-box; }
-  html, body { margin:0; }
-  body {
-    font:15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
-    background:
-      radial-gradient(900px 500px at 10% -10%, rgba(91,140,255,.18), transparent 60%),
-      radial-gradient(700px 400px at 100% 0%, rgba(139,92,246,.14), transparent 60%),
-      var(--bg);
-    color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased;
-  }
-  a { color:inherit; }
-  .wrap { max-width:1080px; margin:0 auto; padding:28px 20px 60px; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; font:16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif; color:var(--text); background:var(--bg); -webkit-font-smoothing:antialiased; }
+  a { color:inherit; text-decoration:none; }
+  .wrap { max-width:1180px; margin:0 auto; padding:0 24px; }
+  h1,h2,h3 { letter-spacing:-.02em; margin:0; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; font:inherit; font-weight:700; border:0; cursor:pointer; border-radius:999px; text-decoration:none; transition:.15s; }
+  .btn.p { background:var(--accent); color:#fff; padding:16px 34px; font-size:19px; box-shadow:0 12px 28px -10px var(--accent); }
+  .btn.p:hover { background:var(--accent-h); transform:translateY(-1px); }
+  .btn.s { background:var(--bg2); color:var(--text); padding:12px 20px; border:1px solid var(--line); }
+  .btn.s:hover { border-color:var(--line2); }
+  .btn svg { width:18px; height:18px; }
 
-  /* header */
-  header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }
-  .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-.01em; }
-  .logo { width:30px; height:30px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:grid; place-items:center; box-shadow:0 6px 18px -6px var(--accent); }
-  .logo svg { width:18px; height:18px; }
-  .pill { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); border:1px solid var(--line); background:var(--card); padding:5px 10px; border-radius:999px; }
-  .pill i { width:7px; height:7px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 3px rgba(52,211,153,.18); }
+  /* nav */
+  nav { position:sticky; top:0; z-index:20; background:rgba(255,255,255,.85); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  nav .wrap { display:flex; align-items:center; justify-content:space-between; height:66px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:21px; }
+  .brand .logo { width:32px; height:32px; border-radius:9px; background:var(--accent); display:grid; place-items:center; }
+  .brand .logo svg { width:18px; height:18px; }
+  .brand em { font-style:normal; color:var(--accent); }
+  .links { display:flex; gap:26px; font-weight:600; color:var(--muted); font-size:15px; }
+  .links a:hover { color:var(--text); }
+  .badge { display:inline-flex; align-items:center; gap:7px; font-size:13px; font-weight:600; color:var(--ok); background:#e8f7f0; padding:6px 12px; border-radius:999px; }
+  .badge i { width:7px; height:7px; border-radius:50%; background:var(--ok); }
+  @media (max-width:820px){ .links { display:none; } }
 
   /* hero */
-  .hero { text-align:center; margin:8px 0 26px; }
-  .hero h1 { font-size:clamp(28px,4.6vw,44px); line-height:1.1; margin:0 0 10px; letter-spacing:-.03em; font-weight:800; }
-  .hero h1 span { background:linear-gradient(90deg,var(--accent),var(--accent2)); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .hero p { margin:0 auto; color:var(--muted); max-width:560px; font-size:16px; }
+  .hero { padding:56px 0 30px; }
+  .hero .grid { display:grid; grid-template-columns:1.05fr 1fr; gap:48px; align-items:center; }
+  .hero-demo { border-radius:var(--radius); overflow:hidden; position:relative; box-shadow:var(--shadow); aspect-ratio:3/2; background:var(--bg2); user-select:none; touch-action:none; cursor:ew-resize; }
+  .hero-demo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:50% 18%; }
+  .hero-demo .after { background: repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 50% / 22px 22px; }
+  .hero-demo .after img { object-fit:cover; }
+  .hero-demo .clip { position:absolute; inset:0; overflow:hidden; width:55%; }
+  .hero-demo .clip img { max-width:none; }
+  .hero-demo .bar { position:absolute; top:0; bottom:0; left:55%; width:3px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+  .hero-demo .bar::after { content:""; position:absolute; top:50%; left:50%; width:44px; height:44px; border-radius:50%; background:#fff; transform:translate(-50%,-50%); box-shadow:0 8px 24px rgba(0,0,0,.25); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1d26' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M8 7l-5 5 5 5M16 7l5 5-5 5'/%3E%3C/svg%3E"); background-size:20px; background-repeat:no-repeat; background-position:center; }
+  .hero h1 { font-size:clamp(40px,5.4vw,66px); line-height:1.02; font-weight:900; margin:26px 0 12px; }
+  .hero .tag { font-size:22px; font-weight:600; color:var(--muted); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .hero .tag b { background:var(--accent); color:#fff; padding:3px 12px; border-radius:999px; font-weight:800; }
+  .hero .sub { color:var(--muted); margin-top:14px; max-width:520px; }
 
-  /* drop zone */
-  .drop {
-    position:relative; display:block; border:1.5px dashed var(--line2); border-radius:18px; padding:38px 20px;
-    text-align:center; cursor:pointer; background:var(--card); transition:border-color .15s, background .15s, transform .15s;
-    box-shadow:var(--shadow);
-  }
-  .drop:hover, .drop.over { border-color:var(--accent); background:var(--card2); }
-  .drop.over { transform:scale(1.005); }
-  .drop input { display:none; }
-  .drop .ic { width:52px; height:52px; margin:0 auto 12px; border-radius:14px; background:linear-gradient(135deg,rgba(91,140,255,.18),rgba(139,92,246,.18)); display:grid; place-items:center; }
-  .drop .ic svg { width:26px; height:26px; stroke:var(--accent); }
-  .drop strong { font-size:17px; }
-  .drop .sub { color:var(--muted); margin-top:4px; font-size:14px; }
-  .drop kbd { font:12px ui-monospace, SFMono-Regular, Menlo, monospace; border:1px solid var(--line2); border-radius:6px; padding:1px 6px; color:var(--muted); }
+  /* upload card */
+  .card { display:block; background:var(--card); border-radius:28px; box-shadow:var(--shadow); padding:56px 32px 40px; text-align:center; position:relative; transition:.15s; border:2px solid transparent; }
+  .card.over { border-color:var(--accent); background:var(--accent-soft); }
+  .card input { display:none; }
+  .card .or { margin-top:22px; font-size:20px; font-weight:600; }
+  .card .hint { color:var(--muted); font-size:14px; margin-top:6px; }
+  .card .hint a { color:var(--accent); text-decoration:underline; cursor:pointer; }
+  .try { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px; padding:0 8px; flex-wrap:wrap; }
+  .try p { margin:0; color:var(--muted); font-size:14px; line-height:1.35; }
+  .thumbs { display:flex; gap:8px; }
+  .thumbs button { width:60px; height:60px; border-radius:12px; border:2px solid var(--line); background:var(--bg2); padding:0; overflow:hidden; cursor:pointer; transition:.15s; }
+  .thumbs button:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .thumbs img { width:100%; height:100%; object-fit:cover; display:block; }
+  .fine { margin-top:14px; font-size:12px; color:var(--dim); }
 
-  /* options */
-  .opts { display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; margin:18px 0 6px; }
-  .opts label { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:14px; }
-  select, input[type=text] {
-    font:inherit; background:var(--card); color:var(--text); border:1px solid var(--line); border-radius:10px; padding:8px 12px; outline:none;
-  }
-  select:focus, input[type=text]:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(91,140,255,.18); }
+  /* result section */
+  .result { display:none; padding:20px 0 40px; scroll-margin-top:80px; }
+  .result.show { display:block; animation:up .35s ease; }
+  @keyframes up { from { opacity:0; transform:translateY(12px); } }
+  .result .box { background:var(--bg2); border-radius:var(--radius); padding:24px; }
+  .opts { display:flex; flex-wrap:wrap; gap:12px 22px; align-items:center; margin-bottom:16px; }
+  .opts label { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:14px; font-weight:600; }
+  select { font:inherit; background:#fff; color:var(--text); border:1px solid var(--line2); border-radius:10px; padding:8px 12px; outline:none; }
   .swatches { display:flex; gap:6px; align-items:center; }
-  .sw { width:28px; height:28px; border-radius:8px; border:2px solid var(--line); cursor:pointer; padding:0; position:relative; background:var(--card); }
-  .sw.on { border-color:var(--accent); box-shadow:0 0 0 3px rgba(91,140,255,.18); }
+  .sw { width:28px; height:28px; border-radius:8px; border:2px solid var(--line2); cursor:pointer; padding:0; position:relative; background:#fff; }
+  .sw.on { border-color:var(--accent); box-shadow:0 0 0 3px rgba(47,107,255,.2); }
   .sw[data-bg=""] { background: repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 50% / 12px 12px; }
   .sw input[type=color] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
   .toggle { position:relative; width:38px; height:22px; background:var(--line2); border-radius:999px; transition:.15s; flex:none; }
@@ -81,114 +89,191 @@
   input:checked + .toggle { background:var(--accent); }
   input:checked + .toggle::after { transform:translateX(16px); }
   .opts input[type=checkbox] { display:none; }
-
-  .status { min-height:24px; margin:10px 0 14px; color:var(--muted); font-size:14px; display:flex; align-items:center; gap:10px; }
-  .status.err { color:var(--err); }
-  .status.ok { color:var(--ok); }
+  .status { min-height:24px; margin:0 0 14px; color:var(--muted); font-size:14px; display:flex; align-items:center; gap:10px; }
+  .status.err { color:var(--err); } .status.ok { color:var(--ok); }
   .spin { width:16px; height:16px; border:2px solid var(--line2); border-top-color:var(--accent); border-radius:50%; animation:sp .8s linear infinite; }
   @keyframes sp { to { transform:rotate(360deg); } }
-
-  /* result */
-  .result { display:none; }
-  .result.show { display:block; animation:up .35s ease; }
-  @keyframes up { from { opacity:0; transform:translateY(10px); } }
-  .cmp {
-    position:relative; border-radius:18px; overflow:hidden; border:1px solid var(--line); box-shadow:var(--shadow);
-    background: repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 50% / 22px 22px;
-    user-select:none; touch-action:none; width:fit-content; max-width:100%; margin:0 auto;
-  }
+  .cmp { position:relative; border-radius:18px; overflow:hidden; box-shadow:var(--shadow); background: repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 50% / 22px 22px; user-select:none; touch-action:none; width:fit-content; max-width:100%; margin:0 auto; }
   .cmp img { display:block; width:auto; max-width:100%; height:auto; max-height:70vh; }
-  .cmp .before { position:absolute; inset:0; overflow:hidden; background:var(--card); }
+  .cmp .before { position:absolute; inset:0; overflow:hidden; background:#fff; }
   .cmp .before img { position:absolute; left:0; top:0; max-width:none; max-height:none; }
-  .cmp .handle { position:absolute; top:0; bottom:0; width:2px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.25); }
-  .cmp .knob { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:40px; height:40px; border-radius:50%; background:#fff; display:grid; place-items:center; box-shadow:0 6px 20px rgba(0,0,0,.35); color:#111; }
-  .cmp .tag { position:absolute; top:12px; font-size:11px; font-weight:700; letter-spacing:.08em; padding:4px 9px; border-radius:6px; background:rgba(0,0,0,.55); color:#fff; backdrop-filter:blur(6px); }
-  .cmp .tag.l { left:12px; } .cmp .tag.r { right:12px; }
-  .actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:14px; }
-  .btn { display:inline-flex; align-items:center; gap:8px; font:inherit; font-weight:600; border:0; cursor:pointer; padding:11px 18px; border-radius:12px; text-decoration:none; transition:.15s; }
-  .btn.p { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; box-shadow:0 10px 24px -10px var(--accent); }
-  .btn.p:hover { transform:translateY(-1px); filter:brightness(1.05); }
-  .btn.s { background:var(--card); color:var(--text); border:1px solid var(--line); }
-  .btn.s:hover { border-color:var(--line2); }
-  .btn svg { width:16px; height:16px; }
+  .cmp .handle { position:absolute; top:0; bottom:0; width:3px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+  .cmp .knob { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:44px; height:44px; border-radius:50%; background:#fff; display:grid; place-items:center; box-shadow:0 8px 24px rgba(0,0,0,.25); color:#111; }
+  .cmp .lbl { position:absolute; top:12px; font-size:11px; font-weight:800; letter-spacing:.08em; padding:5px 10px; border-radius:6px; background:rgba(0,0,0,.6); color:#fff; }
+  .cmp .lbl.l { left:12px; } .cmp .lbl.r { right:12px; }
+  .actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:16px; }
+  .actions .dl { background:var(--accent); color:#fff; padding:12px 22px; box-shadow:0 10px 24px -10px var(--accent); }
+  .actions .dl:hover { background:var(--accent-h); }
   .meta { color:var(--dim); font-size:13px; margin-left:auto; }
 
+  /* quality section */
+  .quality { padding:70px 0 40px; text-align:center; }
+  .quality h2 { font-size:clamp(32px,4.4vw,48px); font-weight:900; }
+  .quality p.lead { color:var(--muted); margin:10px auto 26px; max-width:560px; }
+  .tabs { display:inline-flex; gap:6px; background:var(--bg2); padding:6px; border-radius:999px; margin-bottom:26px; flex-wrap:wrap; justify-content:center; }
+  .tabs button { font:inherit; font-weight:700; font-size:15px; border:0; background:transparent; color:var(--muted); padding:10px 22px; border-radius:999px; cursor:pointer; transition:.15s; }
+  .tabs button.on { background:#fff; color:var(--text); box-shadow:0 2px 10px rgba(24,39,75,.1); }
+  .demo { position:relative; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); width:fit-content; max-width:100%; margin:0 auto; background: repeating-conic-gradient(var(--check-a) 0% 25%, var(--check-b) 0% 50%) 50% / 22px 22px; user-select:none; touch-action:none; cursor:ew-resize; min-height:240px; min-width:min(100%, 320px); }
+  .demo img { display:block; width:auto; max-width:100%; height:auto; max-height:78vh; }
+  .demo .before { position:absolute; inset:0; overflow:hidden; width:50%; background:#fff; }
+  .demo .before img { position:absolute; left:0; top:0; max-width:none; max-height:none; }
+  .demo .bar { position:absolute; top:0; bottom:0; left:50%; width:3px; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+  .demo .bar::after { content:""; position:absolute; top:50%; left:50%; width:48px; height:48px; border-radius:50%; background:#fff; transform:translate(-50%,-50%); box-shadow:0 8px 24px rgba(0,0,0,.25); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1d26' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M8 7l-5 5 5 5M16 7l5 5-5 5'/%3E%3C/svg%3E"); background-size:22px; background-repeat:no-repeat; background-position:center; }
+  .demo .loading { position:absolute; inset:0; display:grid; place-items:center; background:rgba(255,255,255,.7); color:var(--muted); font-weight:600; }
+  .demo .loading.hide { display:none; }
+  .demo .lbl { position:absolute; top:12px; font-size:11px; font-weight:800; letter-spacing:.08em; padding:5px 10px; border-radius:6px; background:rgba(0,0,0,.6); color:#fff; }
+  .demo .lbl.l { left:12px; } .demo .lbl.r { right:12px; }
+  .demo-cta { margin-top:22px; }
+
   /* features */
-  .feats { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:34px; }
-  .feat { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
-  .feat b { display:block; margin-bottom:4px; }
-  .feat span { color:var(--muted); font-size:14px; }
-  footer { margin-top:34px; color:var(--dim); font-size:13px; text-align:center; }
-  footer a { color:var(--muted); }
-  @media (max-width:720px) { .feats { grid-template-columns:1fr; } .pill span { display:none; } .wrap { padding:20px 16px 40px; } .drop { padding:28px 14px; } .meta { margin-left:0; width:100%; } }
+  .feats { padding:60px 0; background:var(--bg2); }
+  .feats .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .feat { background:#fff; border-radius:18px; padding:26px; box-shadow:0 2px 10px rgba(24,39,75,.05); }
+  .feat .ic { width:44px; height:44px; border-radius:12px; background:var(--accent-soft); display:grid; place-items:center; margin-bottom:14px; }
+  .feat .ic svg { width:22px; height:22px; stroke:var(--accent); }
+  .feat h3 { font-size:19px; margin-bottom:6px; }
+  .feat p { margin:0; color:var(--muted); font-size:15px; }
+  .feat code { background:var(--bg2); padding:2px 7px; border-radius:6px; font-size:13px; }
+
+  /* how */
+  .how { padding:70px 0; text-align:center; }
+  .how h2 { font-size:clamp(28px,4vw,40px); font-weight:900; margin-bottom:34px; }
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; text-align:left; }
+  .step { display:flex; gap:16px; }
+  .step .n { flex:none; width:40px; height:40px; border-radius:50%; background:var(--accent); color:#fff; font-weight:800; display:grid; place-items:center; }
+  .step h3 { font-size:18px; margin-bottom:4px; }
+  .step p { margin:0; color:var(--muted); font-size:15px; }
+
+  footer { border-top:1px solid var(--line); padding:30px 0; color:var(--dim); font-size:14px; }
+  footer .wrap { display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+  footer a { color:var(--muted); font-weight:600; }
+
+  @media (max-width:900px) {
+    .hero .grid { grid-template-columns:1fr; gap:28px; }
+    .hero { padding:28px 0 20px; }
+    .card { padding:40px 20px 28px; }
+    .feats .grid, .steps { grid-template-columns:1fr; }
+    .meta { margin-left:0; width:100%; }
+    .hero-demo { aspect-ratio:4/3; }
+  }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18 15 5l4 3L9 21H5z"/><path d="M4 21h16"/></svg></div>
-      bgeraser
-    </div>
-    <span class="pill"><i></i> offline<span> · nothing leaves this computer</span></span>
-  </header>
-
-  <section class="hero">
-    <h1>Remove backgrounds.<br><span>Offline. Free. Unlimited.</span></h1>
-    <p>Drop a photo and get a clean transparent PNG in seconds — no uploads, no watermarks, no sign-up.</p>
-  </section>
-
-  <label class="drop" id="drop">
-    <input type="file" id="file" accept="image/*">
-    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div>
-    <strong>Drop an image here</strong> or click to choose
-    <div class="sub">JPG · PNG · WEBP · up to 25 MB — or press <kbd>Ctrl</kbd>+<kbd>V</kbd> to paste</div>
-  </label>
-
-  <div class="opts">
-    <label>Model
-      <select id="model">
-        {% for name, desc in models.items() %}
-        <option value="{{ name }}" {% if name == default_model %}selected{% endif %}>{{ name }} — {{ desc }}</option>
-        {% endfor %}
-      </select>
-    </label>
-    <label>Background
-      <span class="swatches" id="swatches">
-        <button type="button" class="sw on" data-bg="" title="Transparent"></button>
-        <button type="button" class="sw" data-bg="#ffffff" style="background:#fff" title="White"></button>
-        <button type="button" class="sw" data-bg="#000000" style="background:#000" title="Black"></button>
-        <button type="button" class="sw" data-bg="#00ff00" style="background:#00ff00" title="Green screen"></button>
-        <span class="sw" id="customSw" title="Custom color" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"><input type="color" id="customColor" value="#5b8cff"></span>
-      </span>
-    </label>
-    <label><input type="checkbox" id="matting"><span class="toggle"></span> Fine edges (hair, fur — slower)</label>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18 15 5l4 3L9 21H5z"/><path d="M4 21h16"/></svg></span><span>bg<em>eraser</em></span></a>
+    <div class="links"><a href="#quality">Quality</a><a href="#how">How it works</a><a href="https://github.com/guesttavrej/bgeraser" target="_blank" rel="noopener">GitHub</a></div>
+    <span class="badge"><i></i> Running offline</span>
   </div>
+</nav>
 
-  <div class="status" id="status">Best on photos with one clear subject — a person, product, pet or logo.</div>
+<section class="hero">
+  <div class="wrap grid">
+    <div>
+      {% set hs = samples[1] if samples|length > 1 else (samples[0] if samples else none) %}
+      <div class="hero-demo" id="heroDemo" {% if hs %}data-nobg="{{ hs.nobg }}"{% endif %}>
+        <div class="after"><img src="{{ hs.src if hs else '' }}" id="heroAfter" alt=""></div>
+        <div class="clip" id="heroClip"><img src="{{ hs.src if hs else '' }}" id="heroBefore" alt=""></div>
+        <div class="bar" id="heroBar"></div>
+      </div>
+      <h1>Remove Image<br>Background</h1>
+      <div class="tag">100% automatically and <b>Free</b></div>
+      <p class="sub">Runs on your own computer. No uploads, no watermarks, no sign-up, no limits.</p>
+    </div>
 
-  <section class="result" id="result">
-    <div class="cmp" id="cmp" style="--w:50%">
+    <div>
+      <label class="card" id="drop">
+        <input type="file" id="file" accept="image/*">
+        <span class="btn p"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>Upload Image</span>
+        <div class="or">or drop a file,</div>
+        <div class="hint">paste image with <b>Ctrl+V</b></div>
+        <div class="try">
+          <p>No image?<br>Try one of these:</p>
+          <div class="thumbs" id="thumbs">
+            {% for s in samples %}<button type="button" data-id="{{ s.id }}" data-src="{{ s.src }}" data-nobg="{{ s.nobg }}" title="{{ s.label }}"><img src="{{ s.src }}" alt="{{ s.label }}"></button>{% endfor %}
+          </div>
+        </div>
+        <div class="fine">JPG · PNG · WEBP · up to 25 MB. Your photo never leaves this computer.</div>
+      </label>
+    </div>
+  </div>
+</section>
+
+<section class="result" id="result">
+  <div class="wrap"><div class="box">
+    <div class="opts">
+      <label>Model
+        <select id="model">
+          {% for name, desc in models.items() %}<option value="{{ name }}" {% if name == default_model %}selected{% endif %}>{{ name }} — {{ desc }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>Background
+        <span class="swatches" id="swatches">
+          <button type="button" class="sw on" data-bg="" title="Transparent"></button>
+          <button type="button" class="sw" data-bg="#ffffff" style="background:#fff" title="White"></button>
+          <button type="button" class="sw" data-bg="#000000" style="background:#000" title="Black"></button>
+          <button type="button" class="sw" data-bg="#00ff00" style="background:#00ff00" title="Green screen"></button>
+          <span class="sw" id="customSw" title="Custom color" style="background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red)"><input type="color" id="customColor" value="#2f6bff"></span>
+        </span>
+      </label>
+      <label><input type="checkbox" id="matting"><span class="toggle"></span> Fine edges (hair, fur)</label>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="cmp" id="cmp">
       <img id="after" alt="Result">
       <div class="before" id="beforeWrap" style="width:50%"><img id="before" alt="Original"></div>
-      <div class="handle" id="handle" style="left:50%"><div class="knob"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></div></div>
-      <span class="tag l">BEFORE</span><span class="tag r">AFTER</span>
+      <div class="handle" id="handle" style="left:50%"><div class="knob"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg></div></div>
+      <span class="lbl l">BEFORE</span><span class="lbl r">AFTER</span>
     </div>
     <div class="actions">
-      <a class="btn p" id="dl" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>Download PNG</a>
-      <button class="btn s" id="again" type="button">Another image</button>
+      <a class="btn dl" id="dl" download><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>Download PNG</a>
+      <button class="btn s" id="again" type="button">Upload another</button>
       <span class="meta" id="meta"></span>
     </div>
-  </section>
+  </div></div>
+</section>
 
-  <section class="feats">
-    <div class="feat"><b>100% private</b><span>The AI model runs on this machine. Your photos never touch the internet.</span></div>
-    <div class="feat"><b>No limits</b><span>Process one image or a thousand. No credits, no watermark, no subscription.</span></div>
-    <div class="feat"><b>Batch from the terminal</b><span><code>bgeraser ./folder</code> clears every photo in a folder in one command.</span></div>
-  </section>
+<section class="quality" id="quality">
+  <div class="wrap">
+    <h2>Stunning quality</h2>
+    <p class="lead">Drag the handle to compare. Every result below was made by bgeraser on an ordinary laptop, offline.</p>
+    <div class="tabs" id="tabs">
+      {% for s in samples %}<button type="button" data-id="{{ s.id }}" data-src="{{ s.src }}" data-nobg="{{ s.nobg }}" class="{% if loop.first %}on{% endif %}">{{ s.label }}</button>{% endfor %}
+    </div>
+    <div class="demo" id="demo">
+      <img id="demoAfter" alt="">
+      <div class="before" id="demoBeforeWrap"><img id="demoBefore" alt=""></div>
+      <div class="bar" id="demoBar"></div>
+      <span class="lbl l">BEFORE</span><span class="lbl r">AFTER</span>
+      <div class="loading" id="demoLoading"><span>Processing sample…</span></div>
+    </div>
+    <div class="demo-cta"><a class="btn p" href="#" id="ctaTop">Try with your image</a></div>
+  </div>
+</section>
 
-  <footer>Open source · MIT · <a href="https://github.com/guesttavrej/bgeraser" target="_blank" rel="noopener">github.com/guesttavrej/bgeraser</a></footer>
-</div>
+<section class="feats">
+  <div class="wrap grid">
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><h3>100% private</h3><p>The AI model runs on this machine. Customer photos, ID photos, product shots — nothing is ever uploaded.</p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><h3>No limits, no watermark</h3><p>One image or ten thousand. No credits, no subscription, no "HD costs extra". Free and open source (MIT).</p></div>
+    <div class="feat"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18"/></svg></div><h3>Any background</h3><p>Transparent PNG by default. One click for white, black, green screen or any color — ready for product listings, ID photos and thumbnails.</p></div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><div><h3>Upload or drop</h3><p>Any JPG, PNG or WEBP. Paste from the clipboard, or click a sample to test.</p></div></div>
+      <div class="step"><div class="n">2</div><div><h3>AI finds the subject</h3><p>An open-source U²-Net / ISNet model separates the subject from the background in about a second.</p></div></div>
+      <div class="step"><div class="n">3</div><div><h3>Download the PNG</h3><p>Transparent by default, or pick white, black, green screen or any color for product listings and ID photos.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap">
+  <span>© bgeraser · MIT licensed · built with rembg &amp; U²-Net</span>
+  <span><a href="https://github.com/guesttavrej/bgeraser" target="_blank" rel="noopener">GitHub</a> · <a href="https://pypi.org/project/bgeraser/" target="_blank" rel="noopener">PyPI</a></span>
+</div></footer>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -197,7 +282,28 @@ const before = $('before'), after = $('after'), beforeWrap = $('beforeWrap'), ha
 const dl = $('dl'), meta = $('meta');
 let bg = '', currentFile = null, busy = false;
 
-/* background swatches */
+/* hero preview: show the "people" sample processed */
+(async () => {
+  const hero = $('heroDemo'), url = hero.dataset.nobg; if (!url) return;
+  try { const r = await fetch(url, { cache: 'no-store' }); if (r.ok) $('heroAfter').src = URL.createObjectURL(await r.blob()); } catch {}
+  const heroSync = () => { const bi = $('heroBefore'); bi.style.width = hero.clientWidth + 'px'; bi.style.height = hero.clientHeight + 'px'; };
+  heroSync(); window.addEventListener('resize', heroSync);
+  let hd = false;
+  const heroSplit = x => { const r = hero.getBoundingClientRect(); const p = Math.max(0, Math.min(1, (x - r.left) / r.width)) * 100; $('heroClip').style.width = p + '%'; $('heroBar').style.left = p + '%'; };
+  hero.addEventListener('pointerdown', e => { hd = true; hero.setPointerCapture(e.pointerId); heroSplit(e.clientX); });
+  hero.addEventListener('pointermove', e => { if (hd) heroSplit(e.clientX); });
+  ['pointerup','pointercancel'].forEach(t => hero.addEventListener(t, () => hd = false));
+})();
+
+/* sample thumbnails -> run through the model like an upload */
+$('thumbs').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const r = await fetch(b.dataset.src); const blob = await r.blob();
+  run(new File([blob], b.dataset.id + '.jpg', { type: blob.type || 'image/jpeg' }));
+});
+$('ctaTop').addEventListener('click', e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => file.click(), 400); });
+
+/* options */
 $('swatches').addEventListener('click', e => {
   const b = e.target.closest('.sw'); if (!b || b.id === 'customSw') return;
   document.querySelectorAll('.sw').forEach(s => s.classList.remove('on')); b.classList.add('on');
@@ -211,15 +317,15 @@ $('customColor').addEventListener('change', () => { if (currentFile && !busy) ru
 $('model').addEventListener('change', () => { if (currentFile && !busy) run(currentFile); });
 $('matting').addEventListener('change', () => { if (currentFile && !busy) run(currentFile); });
 
-/* input methods */
+/* inputs */
 ['dragenter','dragover'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave','drop'].forEach(t => document.addEventListener(t, e => { e.preventDefault(); if (t === 'drop' || e.target === document.documentElement) drop.classList.remove('over'); }));
 document.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) run(f); });
 file.addEventListener('change', () => { if (file.files[0]) run(file.files[0]); file.value = ''; });
 window.addEventListener('paste', e => { const f = [...(e.clipboardData?.files || [])][0]; if (f) run(f); });
-$('again').addEventListener('click', () => { result.classList.remove('show'); currentFile = null; setStatus('Drop the next image.'); file.click(); });
+$('again').addEventListener('click', () => { result.classList.remove('show'); currentFile = null; window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => file.click(), 300); });
 
-/* comparison slider */
+/* result slider */
 function setSplit(x) {
   const r = cmp.getBoundingClientRect(); const p = Math.max(0, Math.min(1, (x - r.left) / r.width)) * 100;
   beforeWrap.style.width = p + '%'; handle.style.left = p + '%';
@@ -227,16 +333,15 @@ function setSplit(x) {
 let dragging = false;
 cmp.addEventListener('pointerdown', e => { dragging = true; cmp.setPointerCapture(e.pointerId); setSplit(e.clientX); });
 cmp.addEventListener('pointermove', e => { if (dragging) setSplit(e.clientX); });
-cmp.addEventListener('pointerup', () => dragging = false);
-cmp.addEventListener('pointercancel', () => dragging = false);
+['pointerup','pointercancel'].forEach(t => cmp.addEventListener(t, () => dragging = false));
 function syncBefore() { before.style.width = after.clientWidth + 'px'; before.style.height = after.clientHeight + 'px'; }
 window.addEventListener('resize', syncBefore);
-
 function setStatus(msg, cls) { status.className = 'status' + (cls ? ' ' + cls : ''); status.innerHTML = msg; }
 
 async function run(f) {
   if (!f.type.startsWith('image/')) { setStatus('That is not an image file.', 'err'); return; }
   currentFile = f; busy = true;
+  result.classList.add('show'); result.scrollIntoView({ behavior: 'smooth', block: 'start' });
   setStatus('<span class="spin"></span> Removing background…');
   const slow = setTimeout(() => setStatus('<span class="spin"></span> Still working — large images and bigger models take longer.'), 8000);
   const fd = new FormData();
@@ -252,19 +357,51 @@ async function run(f) {
       new Promise(res => { after.complete && after.naturalWidth ? res() : (after.onload = res); }),
       new Promise(res => { before.complete && before.naturalWidth ? res() : (before.onload = res); }),
     ]);
-    result.classList.add('show');
     syncBefore(); beforeWrap.style.width = '50%'; handle.style.left = '50%';
-    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     dl.href = url; dl.download = f.name.replace(/\.[^.]+$/, '') + '-nobg.png';
     const s = ((performance.now() - t0) / 1000).toFixed(1);
     meta.textContent = `${after.naturalWidth}×${after.naturalHeight} · ${(blob.size/1024).toFixed(0)} KB · ${s}s`;
-    setStatus(`Done in ${s}s — drag the slider to compare.`, 'ok');
+    setStatus(`Done in ${s}s — drag the handle to compare.`, 'ok');
   } catch (e) {
     const m = e.message === 'Failed to fetch'
       ? 'Could not reach the server. Is the “bgeraser serve” window still open? Restart it and reload this page.'
       : e.message;
     setStatus('Error: ' + m, 'err');
   } finally { clearTimeout(slow); busy = false; }
+}
+
+/* quality section */
+const demo = $('demo'), demoBefore = $('demoBefore'), demoAfter = $('demoAfter'), demoWrap = $('demoBeforeWrap'), demoBar = $('demoBar'), demoLoading = $('demoLoading');
+function demoSplit(x) {
+  const r = demo.getBoundingClientRect(); const p = Math.max(0, Math.min(1, (x - r.left) / r.width)) * 100;
+  demoWrap.style.width = p + '%'; demoBar.style.left = p + '%';
+}
+function demoSync() { demoBefore.style.width = demoAfter.clientWidth + 'px'; demoBefore.style.height = demoAfter.clientHeight + 'px'; }
+window.addEventListener('resize', demoSync);
+let dd = false;
+demo.addEventListener('pointerdown', e => { dd = true; demo.setPointerCapture(e.pointerId); demoSplit(e.clientX); });
+demo.addEventListener('pointermove', e => { if (dd) demoSplit(e.clientX); });
+['pointerup','pointercancel'].forEach(t => demo.addEventListener(t, () => dd = false));
+async function showDemo(id, src, nobgUrl) {
+  demoLoading.classList.remove('hide');
+  demoBefore.src = src; demoAfter.removeAttribute('src');
+  try {
+    const r = await fetch(nobgUrl || `/samples/${id}/nobg.png`, { cache: 'no-store' }); if (!r.ok) throw new Error();
+    demoAfter.src = URL.createObjectURL(await r.blob());
+    await new Promise(res => { demoAfter.onload = res; });
+  } catch { demoLoading.querySelector('span').textContent = 'Could not process sample'; return; }
+  demoSync(); demoWrap.style.width = '50%'; demoBar.style.left = '50%';
+  demoLoading.classList.add('hide');
+}
+$('tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+  showDemo(b.dataset.id, b.dataset.src, b.dataset.nobg);
+});
+const firstTab = document.querySelector('#tabs button');
+if (firstTab) {
+  const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { showDemo(firstTab.dataset.id, firstTab.dataset.src, firstTab.dataset.nobg); io.disconnect(); } }, { rootMargin: '300px' });
+  io.observe(demo);
 }
 </script>
 </body>

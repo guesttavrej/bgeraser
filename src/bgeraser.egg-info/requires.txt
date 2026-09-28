@@ -1,0 +1,12 @@
+rembg>=2.0.50
+onnxruntime>=1.16
+pillow>=10.0
+numpy>=1.24
+opencv-python-headless>=4.8
+
+[dev]
+pytest>=7
+flask>=3.0
+
+[web]
+flask>=3.0

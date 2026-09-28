@@ -21,7 +21,7 @@ pip install bgeraser            # CLI + library
 pip install "bgeraser[web]"     # also the drag & drop web page
 ```
 
-Needs Python 3.9+. The first run downloads the model (4 MB for the default `u2netp`; larger models download when you choose them).
+Needs Python 3.9+. The first run downloads the AI model (about 170 MB for the default `isnet-general-use`, one time).
 
 ## Command line
 
@@ -40,8 +40,8 @@ bgeraser photo.jpg --bg "#00ff00"
 bgeraser ./products
 bgeraser ./products -o ./out --recursive
 
-# better model for people
-bgeraser --model u2net_human_seg me.png
+# faster (lower quality) model for big batches
+bgeraser --model u2netp ./products
 
 # finer edges for hair / fur (slower)
 bgeraser photo.jpg --matting
@@ -78,9 +78,9 @@ process_folder("./products", "./products/out")           # batch
 
 | name | best for |
 |---|---|
-| `u2netp` *(default)* | fast, small, everyday use |
-| `u2net` | general, higher quality |
-| `isnet-general-use` | often the cleanest edges |
+| `isnet-general-use` *(default)* | cleanest edges — people, products, cars |
+| `u2net` | general, good quality |
+| `u2netp` | fastest, small, rougher edges |
 | `u2net_human_seg` | people / portraits |
 | `isnet-anime` | anime & illustrations |
 | `u2net_cloth_seg` | clothing segmentation |

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bgeraser"
-version = "0.1.0"
+version = "0.3.0"
 description = "Remove image backgrounds locally — CLI, Python library and a tiny web UI. No uploads, no API keys."
 readme = "README.md"
 license = { text = "MIT" }
@@ -24,6 +24,8 @@ dependencies = [
   "rembg>=2.0.50",
   "onnxruntime>=1.16",
   "pillow>=10.0",
+  "numpy>=1.24",
+  "opencv-python-headless>=4.8",
 ]
 
 [project.optional-dependencies]
@@ -41,4 +43,4 @@ Issues = "https://github.com/guesttavrej/bgeraser/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-bgeraser = ["templates/*.html"]
+bgeraser = ["templates/*.html", "samples/*"]
