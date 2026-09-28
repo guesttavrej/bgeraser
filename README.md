@@ -2,6 +2,8 @@
 
 **Remove image backgrounds on your own computer.** No uploads, no API keys, no watermarks, no limits.
 
+![bgeraser web UI](screenshot.png)
+
 Works three ways:
 
 | | |
