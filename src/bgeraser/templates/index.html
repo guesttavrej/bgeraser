@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bgeraser</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --text:#e8eaf0; --muted:#8b91a1; --accent:#5b8cff; --border:#2a2f3a; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  main { max-width:960px; margin:0 auto; padding:32px 16px; }
+  h1 { margin:0 0 4px; font-size:28px; }
+  .sub { color:var(--muted); margin:0 0 24px; }
+  .drop { border:2px dashed var(--border); border-radius:14px; padding:40px 16px; text-align:center; cursor:pointer; transition:.15s; background:var(--card); }
+  .drop.over, .drop:hover { border-color:var(--accent); }
+  .drop input { display:none; }
+  .opts { display:flex; flex-wrap:wrap; gap:12px 20px; margin:16px 0; align-items:center; color:var(--muted); }
+  .opts label { display:flex; gap:6px; align-items:center; }
+  select, input[type=text] { background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px 10px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+  @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
+  .pane { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px; min-height:220px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; }
+  .pane h3 { margin:0; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; }
+  .checker { background: repeating-conic-gradient(#2a2f3a 0% 25%, #1f232c 0% 50%) 50% / 20px 20px; border-radius:8px; }
+  img { max-width:100%; max-height:420px; border-radius:8px; }
+  .btn { display:inline-block; background:var(--accent); color:#fff; padding:8px 16px; border-radius:8px; text-decoration:none; font-weight:600; }
+  .status { color:var(--muted); min-height:24px; margin-top:8px; }
+  .err { color:#ff7b7b; }
+</style>
+</head>
+<body>
+<main>
+  <h1>bgeraser</h1>
+  <p class="sub">Remove image backgrounds — runs 100% on this computer, nothing is uploaded to the internet.</p>
+
+  <label class="drop" id="drop">
+    <input type="file" id="file" accept="image/*">
+    <strong>Drop an image here</strong> or click to choose<br>
+    <span style="color:var(--muted)">JPG, PNG, WEBP · up to 25 MB</span>
+  </label>
+
+  <div class="opts">
+    <label>Model
+      <select id="model">
+        {% for name, desc in models.items() %}
+        <option value="{{ name }}" {% if name == default_model %}selected{% endif %}>{{ name }} — {{ desc }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Background <input type="text" id="bg" placeholder="transparent (or: white, #00ff00)" size="26"></label>
+    <label><input type="checkbox" id="matting"> fine edges (slower)</label>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="grid">
+    <div class="pane"><h3>Original</h3><img id="before" alt=""></div>
+    <div class="pane checker"><h3>Result</h3><img id="after" alt=""><a id="dl" class="btn" style="display:none" download>Download PNG</a></div>
+  </div>
+</main>
+<script>
+const drop = document.getElementById('drop'), file = document.getElementById('file');
+const before = document.getElementById('before'), after = document.getElementById('after');
+const dl = document.getElementById('dl'), status = document.getElementById('status');
+
+['dragenter','dragover'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => { if (ev.dataTransfer.files[0]) run(ev.dataTransfer.files[0]); });
+file.addEventListener('change', () => { if (file.files[0]) run(file.files[0]); });
+window.addEventListener('paste', ev => { const f = [...ev.clipboardData.files][0]; if (f) run(f); });
+
+async function run(f) {
+  before.src = URL.createObjectURL(f);
+  after.removeAttribute('src'); dl.style.display = 'none';
+  status.textContent = 'Processing… (first run downloads the model, please wait)';
+  status.classList.remove('err');
+  const fd = new FormData();
+  fd.append('image', f);
+  fd.append('model', document.getElementById('model').value);
+  fd.append('bg', document.getElementById('bg').value);
+  if (document.getElementById('matting').checked) fd.append('matting', 'on');
+  const t0 = performance.now();
+  try {
+    const r = await fetch('/remove', { method: 'POST', body: fd });
+    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || r.statusText); }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    after.src = url; dl.href = url; dl.download = f.name.replace(/\.[^.]+$/, '') + '-nobg.png';
+    dl.style.display = 'inline-block';
+    status.textContent = `Done in ${((performance.now() - t0) / 1000).toFixed(1)}s`;
+  } catch (e) {
+    status.textContent = 'Error: ' + e.message; status.classList.add('err');
+  }
+}
+</script>
+</body>
+</html>
