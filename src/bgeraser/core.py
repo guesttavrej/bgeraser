@@ -131,15 +131,29 @@ def _clean_mask(mask: Image.Image) -> Image.Image:
     return Image.fromarray((alpha * 255).astype(np.uint8), "L")
 
 
+def get_mask(image: Image.Image, **kwargs) -> Image.Image:
+    """Return only the cleaned mask (mode "L": white = keep, black = remove).
+
+    Drop it onto a layer mask in GIMP / Photoshop / Krita to fix a cut-out by hand.
+    Accepts the same options as :func:`remove_background_image` except ``bg_color``.
+    """
+    kwargs.pop("bg_color", None)
+    rgba = remove_background_image(image, **kwargs)
+    return rgba.split()[3]
+
+
 def remove_background(
     input_path: PathLike,
     output_path: Optional[PathLike] = None,
+    save_mask: bool = False,
     **kwargs,
 ) -> Path:
     """Remove the background of the image at ``input_path``.
 
     Writes a PNG (transparent unless ``bg_color`` is set) and returns its path.
     If ``output_path`` is omitted, ``<name>-nobg.png`` is written next to the input.
+    With ``save_mask=True`` a second file ``<name>-mask.png`` (grayscale) is written
+    alongside it.
     """
     input_path = Path(input_path)
     if output_path is None:
@@ -150,6 +164,16 @@ def remove_background(
     with Image.open(input_path) as img:
         img.load()
         out = remove_background_image(img, **kwargs)
+
+    if save_mask:
+        if out.mode == "RGBA":
+            mask = out.split()[3]
+        else:  # flattened onto a color: recompute the mask
+            with Image.open(input_path) as img:
+                img.load()
+                mask = get_mask(img, **kwargs)
+        stem = output_path.stem[:-5] if output_path.stem.endswith("-nobg") else output_path.stem
+        mask.save(output_path.with_name(f"{stem}-mask.png"), "PNG")
 
     fmt = "PNG"
     if output_path.suffix.lower() in {".jpg", ".jpeg"}:

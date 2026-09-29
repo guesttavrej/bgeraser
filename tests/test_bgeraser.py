@@ -82,3 +82,21 @@ def test_web_app(sample: Path):
     r = client.post("/remove", data={"image": (io.BytesIO(sample.read_bytes()), "circle.jpg")})
     assert r.status_code == 200 and r.mimetype == "image/png"
     assert client.post("/remove", data={}).status_code == 400
+
+
+def test_save_mask(sample: Path, tmp_path: Path):
+    from bgeraser import get_mask
+
+    out = remove_background(sample, tmp_path / "x-nobg.png", save_mask=True)
+    mask_path = tmp_path / "x-mask.png"
+    assert out.exists() and mask_path.exists()
+    with Image.open(mask_path) as m:
+        assert m.mode == "L" and m.size == (160, 160)
+        assert m.getpixel((80, 80)) > 200 and m.getpixel((2, 2)) < 40
+    with Image.open(sample) as im:
+        assert get_mask(im).mode == "L"
+
+
+def test_cli_mask_flag(sample: Path, tmp_path: Path):
+    assert main([str(sample), "-o", str(tmp_path / "y.png"), "--mask", "-q"]) == 0
+    assert (tmp_path / "y-mask.png").exists()

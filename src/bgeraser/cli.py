@@ -21,7 +21,7 @@ def _build_parser() -> argparse.ArgumentParser:
             "  bgeraser photo.jpg -o clean.png\n"
             "  bgeraser photo.jpg --bg white          -> white background instead of transparent\n"
             "  bgeraser ./products -o ./products/out  -> every image in the folder\n"
-            "  bgeraser --model u2net_human_seg me.png\n"
+            "  bgeraser photo.jpg --mask               -> also writes photo-mask.png for GIMP\n"
             "  bgeraser serve                         -> open a local web page (drag & drop)\n"
             "  bgeraser models                        -> list available models"
         ),
@@ -36,6 +36,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--bg", metavar="COLOR", help="replace background with a color, e.g. white, #00ff00, 255,0,0")
     p.add_argument("--matting", action="store_true", help="alpha matting for finer edges (hair, fur). Slower")
     p.add_argument("--post", action="store_true", help="post-process the mask for smoother results")
+    p.add_argument("--mask", action="store_true", help="also save the mask as <name>-mask.png (for GIMP / Photoshop layer masks)")
     p.add_argument("-r", "--recursive", action="store_true", help="include sub-folders when input is a folder")
     p.add_argument("--host", default="127.0.0.1", help="host for 'serve' (default 127.0.0.1)")
     p.add_argument("--port", type=int, default=5000, help="port for 'serve' (default 5000)")
@@ -81,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
             if not args.quiet:
                 print(f"  {i.name} -> {o}")
 
-        written = process_folder(src, args.output, recursive=args.recursive, on_progress=progress, **opts)
+        written = process_folder(src, args.output, recursive=args.recursive, on_progress=progress, save_mask=args.mask, **opts)
         if not written:
             print("no images found", file=sys.stderr)
             return 1
@@ -89,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"done: {len(written)} image(s) in {time.time() - t0:.1f}s")
         return 0
 
-    out = remove_background(src, args.output, **opts)
+    out = remove_background(src, args.output, save_mask=args.mask, **opts)
     if not args.quiet:
         print(f"{src.name} -> {out}  ({time.time() - t0:.1f}s)")
     return 0

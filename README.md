@@ -67,6 +67,7 @@ Drop a photo, paste one with Ctrl+V, or click a sample. Drag the slider to compa
 - **Solid background** — white, black, green screen, or any color you pick (product listings, ID photos, thumbnails)
 - **Before / after slider** — check the result before you download
 - **Fine edges mode** — extra care for hair and fur
+- **Mask export** — `--mask` saves a grayscale layer mask so you can fix a cut-out by hand in GIMP, Photoshop or Krita. The PNG keeps every original pixel under the transparency, so nothing is ever lost.
 - **Batch a whole folder** — one command, hundreds of images
 - **Use it from Python** — a two-line API for your own scripts
 
@@ -79,6 +80,7 @@ bgeraser photo.jpg --bg white            # solid background instead of transpare
 bgeraser photo.jpg --bg "#00ff00"        # any hex color
 bgeraser ./products                      # every image in a folder → ./products/nobg/
 bgeraser ./products -o ./out --recursive # include sub-folders
+bgeraser photo.jpg --mask                # also save photo-mask.png (layer mask for GIMP / Photoshop)
 bgeraser photo.jpg --matting             # finer edges for hair / fur (slower)
 bgeraser --model u2netp ./products       # fastest model for big batches
 bgeraser models                          # list available models
@@ -88,12 +90,13 @@ bgeraser serve --port 8080               # web app on another port
 ## Python
 
 ```python
-from bgeraser import remove_background, remove_background_bytes, process_folder
+from bgeraser import remove_background, remove_background_bytes, process_folder, get_mask
 
 remove_background("photo.jpg")                                  # → photo-nobg.png
 remove_background("photo.jpg", "out.png", bg_color="white")     # flatten onto white
 png_bytes = remove_background_bytes(open("photo.jpg", "rb").read())
 process_folder("./products", "./products/out")                  # batch
+mask = get_mask(Image.open("photo.jpg"))                        # grayscale mask (PIL "L")
 ```
 
 ## How it works

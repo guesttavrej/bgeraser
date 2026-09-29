@@ -13,14 +13,16 @@ from .core import (
     remove_background,
     remove_background_bytes,
     process_folder,
+    get_mask,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __all__ = [
     "MODELS",
     "DEFAULT_MODEL",
     "remove_background",
     "remove_background_bytes",
     "process_folder",
+    "get_mask",
     "__version__",
 ]
